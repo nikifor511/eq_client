@@ -1,11 +1,9 @@
-import client
-
 from PyQt5 import QtWidgets
 import client_ui
 import sys
 
 
-class ExampleApp(QtWidgets.QMainWindow, client_ui.Ui_Form):
+class ClientApp(QtWidgets.QMainWindow, client_ui.UiForm):
     def __init__(self):
         # Это здесь нужно для доступа к переменным, методам
         # и т.д. в файле design.py
@@ -14,7 +12,7 @@ class ExampleApp(QtWidgets.QMainWindow, client_ui.Ui_Form):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
-    window = ExampleApp()  # Создаём объект класса ExampleApp
+    window = ClientApp()  # Создаём объект класса ExampleApp
     window.show()  # Показываем окно
     app.exec_()  # и запускаем приложение
 

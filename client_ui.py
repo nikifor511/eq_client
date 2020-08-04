@@ -1,37 +1,72 @@
-from PyQt5.QtCore import (QCoreApplication, QDate, QDateTime, QMetaObject,
-    QObject, QPoint, QRect, QSize, QTime, QUrl, Qt)
-from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
-    QFontDatabase, QIcon, QKeySequence, QLinearGradient, QPalette, QPainter,
-    QPixmap, QRadialGradient)
-from PyQt5.QtWidgets import *
+import client
+from PyQt5 import QtCore, QtGui, QtWidgets
+from threading import Thread
 
-
-class Ui_Form(object):
+class UiForm(object):
     def setupUi(self, Form):
-        if not Form.objectName():
-            Form.setObjectName(u"Form")
+        Form.setObjectName("Form")
         Form.resize(400, 300)
-        self.pushButton = QPushButton(Form)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(10, 10, 75, 23))
-        self.lineEdit = QLineEdit(Form)
-        self.lineEdit.setObjectName(u"lineEdit")
-        self.lineEdit.setGeometry(QRect(90, 10, 113, 20))
-        self.lineEdit_2 = QLineEdit(Form)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
-        self.lineEdit_2.setGeometry(QRect(210, 10, 51, 20))
-        self.pushButton_2 = QPushButton(Form)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(310, 10, 81, 23))
+        self.connectButton = QtWidgets.QPushButton(Form)
+        self.connectButton.setGeometry(QtCore.QRect(10, 10, 75, 23))
+        self.connectButton.setText("Connect")
+        self.connectButton.setObjectName("connectButton")
+        self.connectButton.clicked.connect(self.connectToHost)
 
-        self.retranslateUi(Form)
+        self.hostEdit = QtWidgets.QLineEdit(Form)
+        self.hostEdit.setGeometry(QtCore.QRect(90, 10, 151, 20))
+        self.hostEdit.setText("127.0.0.1")
+        self.hostEdit.setObjectName("hostEdit")
 
-        QMetaObject.connectSlotsByName(Form)
-    # setupUi
+        self.portEdit = QtWidgets.QLineEdit(Form)
+        self.portEdit.setGeometry(QtCore.QRect(250, 10, 51, 20))
+        self.portEdit.setText("58583")
+        self.portEdit.setObjectName("portEdit")
 
-    def retranslateUi(self, Form):
-        Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
-        self.pushButton.setText(QCoreApplication.translate("Form", u"Connect", None))
-        self.pushButton_2.setText(QCoreApplication.translate("Form", u"Disconnect", None))
-    # retranslateUi
+        self.DisconnectButton = QtWidgets.QPushButton(Form)
+        self.DisconnectButton.setGeometry(QtCore.QRect(310, 10, 81, 23))
+        self.DisconnectButton.setText("Disconnect")
+        self.DisconnectButton.setObjectName("DisconnectButton")
+        self.DisconnectButton.setEnabled(False)
+        self.DisconnectButton.clicked.connect(self.disconnectToHost)
 
+        self.log = QtWidgets.QTextEdit(Form)
+        self.log.setGeometry(QtCore.QRect(10, 40, 381, 221))
+        self.log.setObjectName("log")
+
+        self.messageEdit = QtWidgets.QLineEdit(Form)
+        self.messageEdit.setGeometry(QtCore.QRect(10, 270, 301, 20))
+        self.messageEdit.setObjectName("messageEdit")
+
+        self.sendButton = QtWidgets.QPushButton(Form)
+        self.sendButton.setGeometry(QtCore.QRect(320, 270, 75, 23))
+        self.sendButton.setText("Send")
+
+        self.my_client = None
+
+    def connectToHost(self):
+        addr = (self.hostEdit.text(), int(self.portEdit.text()))
+        self.my_client = client.Client()
+        self.my_client.cm.to_log_sygnal.connect(self.log_append)
+        if self.my_client.connect(addr):
+            thread = Thread(target=self.my_client.receive, daemon=True)
+            thread.start()
+
+
+
+            self.DisconnectButton.setEnabled(True)
+            self.connectButton.setEnabled(False)
+            self.log.append("Connect to " + str(addr[0]) + ":" + str(addr[1]))
+        else:
+            self.log.append("Error connecting to " + str(addr[0]) + ":" + str(addr[1]))
+
+    def disconnectToHost(self):
+        # addr = (self.hostEdit.text(), int(self.portEdit.text()))
+        self.my_client.disconnect()
+        self.my_client = None
+
+        self.log.append("Disconnect from server")
+        self.DisconnectButton.setEnabled(False)
+        self.connectButton.setEnabled(True)
+
+    def log_append(self, message):
+        self.log.append(message)
