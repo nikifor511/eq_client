@@ -1,47 +1,23 @@
 import client
 
-from PySide2.QtWidgets import (QApplication, QLabel, QPushButton,
-                               QVBoxLayout, QWidget)
-from PySide2.QtCore import Slot, Qt
-import random, sys
+from PyQt5 import QtWidgets
+import client_ui
+import sys
 
 
-class MyWidget(QWidget):
+class ExampleApp(QtWidgets.QMainWindow, client_ui.Ui_Form):
     def __init__(self):
-        QWidget.__init__(self)
+        # Это здесь нужно для доступа к переменным, методам
+        # и т.д. в файле design.py
+        super().__init__()
+        self.setupUi(self)  # Это нужно для инициализации нашего дизайна
 
-        self.hello = ["Hallo Welt", "你好，世界", "Hei maailma",
-            "Hola Mundo", "Привет мир"]
-
-        self.button = QPushButton("Click me!")
-        self.text = QLabel("Hello World")
-        self.text.setAlignment(Qt.AlignCenter)
-
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.text)
-        self.layout.addWidget(self.button)
-        self.setLayout(self.layout)
-
-        # Connecting the signal
-        self.button.clicked.connect(self.magic)
-
-    @Slot()
-    def magic(self):
-
-        self.text.setText(random.choice(self.hello))
+def main():
+    app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
+    window = ExampleApp()  # Создаём объект класса ExampleApp
+    window.show()  # Показываем окно
+    app.exec_()  # и запускаем приложение
 
 
-app = QApplication(sys.argv)
-
-widget = MyWidget()
-widget.resize(800, 600)
-widget.show()
-
-
-
-HOST = "127.0.0.1"
-PORT = 58583
-
-ADDR = (HOST, PORT)
-client.start(ADDR)
-sys.exit(app.exec_())
+if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
+    main()  # то запускаем функцию main()
