@@ -2,6 +2,7 @@ import client
 from PyQt5 import QtCore, QtGui, QtWidgets
 from threading import Thread
 
+
 class UiForm(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
@@ -40,6 +41,7 @@ class UiForm(object):
         self.sendButton = QtWidgets.QPushButton(Form)
         self.sendButton.setGeometry(QtCore.QRect(320, 270, 75, 23))
         self.sendButton.setText("Send")
+        self.sendButton.clicked.connect(self.send)
 
         self.my_client = None
 
@@ -61,6 +63,7 @@ class UiForm(object):
 
     def disconnectToHost(self):
         # addr = (self.hostEdit.text(), int(self.portEdit.text()))
+        # self.my_client.send("#quit")
         self.my_client.disconnect()
         self.my_client = None
 
@@ -70,3 +73,15 @@ class UiForm(object):
 
     def log_append(self, message):
         self.log.append(message)
+
+    def send(self):
+        if len(self.messageEdit.text()) > 0:
+            if self.my_client is not None:
+                self.my_client.send(self.messageEdit.text())
+                self.log.append("Me: " + self.messageEdit.text())
+                self.messageEdit.setText("")
+            else:
+                self.log.append("Error sending: " + self.messageEdit.text())
+        else:
+            # self.messageEdit.setText("Type message here...")
+            pass

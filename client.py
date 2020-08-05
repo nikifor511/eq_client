@@ -26,13 +26,13 @@ class Client(QObject):
             except OSError:  # Possibly client has left the chat.
                 break
 
-    def send(self, event=None):
+    def send(self, message, event=None):
         """ Handles sending of messages. """
-        msg = "hi"
-        self.sock.send(bytes(msg, "utf8"))
-        if msg == "#quit":
-            self.sock.close()
-            # top.quit()
+        try:
+            self.sock.send(bytes(message, "utf8"))
+            return True
+        except:
+            return False
 
     def connect(self, ADDR):
         try:
