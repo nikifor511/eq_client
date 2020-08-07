@@ -1,8 +1,10 @@
-from socket import AF_INET, socket, SOCK_STREAM
+# from socket import AF_INET, socket, SOCK_STREAM
+import socket
 from PyQt5.QtCore import QObject, pyqtSignal
-
+from threading import Thread
 
 BUFSIZ = 1024
+
 
 class Client(QObject):
 
@@ -13,7 +15,8 @@ class Client(QObject):
         super(Client, self).__init__()
         self.cm = self.commu()
         self.to_log = self.cm.to_log_sygnal
-        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock = None
+
         # self.to_log = pyqtSignal(int)
 
     def receive(self):
@@ -21,11 +24,11 @@ class Client(QObject):
         while True:
             try:
                 msg = self.sock.recv(BUFSIZ).decode("utf8")
-                if str(msg) == "#quit":
-                    self.disconnect()
+
                 print(str(msg))
                 self.cm.to_log_sygnal.emit(str(msg))
                 # msg_list.insert(tkinter.END, msg)
+
             except OSError:  # Possibly client has left the chat.
                 break
 
@@ -38,6 +41,9 @@ class Client(QObject):
             return False
 
     def connect(self, ADDR):
+        if self.sock is None:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             # sock = socket(AF_INET, SOCK_STREAM)
             self.sock.connect(ADDR)
@@ -45,10 +51,10 @@ class Client(QObject):
             print("[Errno 111] Connection refused")
             return False
 
+        receive_thread = Thread(target=self.receive, daemon=True)
+        receive_thread.start()
         return True
-        # receive_thread = Thread(target=receive)
-        # receive_thread.start()
 
     def disconnect(self):
-        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
+        self.sock = None
