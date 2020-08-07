@@ -1,21 +1,74 @@
 from PyQt5 import QtWidgets
 import client_ui
 import sys
+import client
+import client_window
+from threading import Thread
 
 
-class ClientApp(QtWidgets.QMainWindow, client_ui.UiForm):
-    def __init__(self):
-        # Это здесь нужно для доступа к переменным, методам
-        # и т.д. в файле client_ui.py
-        super().__init__()
-        self.setupUi(self)  # Это нужно для инициализации нашего дизайна
+my_client = None
+my_client_window = None
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
-    client_window = ClientApp()  # Создаём объект класса ClientApp
-    client_window.show()  # Показываем окно
-    app.exec_()  # и запускаем приложение
+    global my_client_window
+    my_client_window = client_window.ClientWindow()
+    my_client_window.connectButton.clicked.connect(connect_to)
+    my_client_window.DisconnectButton.clicked.connect(disconnect)
+    my_client_window.sendButton.clicked.connect(send)
+
+    sys.exit(app.exec_())
 
 
-if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
-    main()  # то запускаем функцию main()
+def connect_to(addr):
+    print("connect")
+    global my_client_window
+    global my_client
+
+    if my_client is None:
+        my_client = client.Client()
+        my_client.cm.to_log_sygnal.connect(log_app)
+
+    addr = (my_client_window.hostEdit.text(), int(my_client_window.portEdit.text()))
+    if my_client.connect(addr):
+        thread = Thread(target=my_client.receive, daemon=True)
+        thread.start()
+        my_client_window.DisconnectButton.setEnabled(True)
+        my_client_window.connectButton.setEnabled(False)
+        log_app("Connect to " + str(addr[0]) + ":" + str(addr[1]))
+    else:
+        log_app("Error connecting to " + str(addr[0]) + ":" + str(addr[1]))
+
+
+def disconnect():
+    global my_client
+    if my_client is not None:
+        my_client.send("#quit")
+        # my_client.disconnect()
+        # my_client = None
+
+        log_app("Disconnect from server")
+        my_client_window.DisconnectButton.setEnabled(False)
+        my_client_window.connectButton.setEnabled(True)
+
+
+def log_app(message):
+    my_client_window.log.append(message)
+
+
+def send():
+    if len(my_client_window.messageEdit.text()) > 0:
+        if my_client is not None:
+            my_client.send(my_client_window.messageEdit.text())
+            log_app("Me: " + my_client_window.messageEdit.text())
+            my_client_window.messageEdit.setText("")
+        else:
+            log_app("Error sending: " + my_client_window.messageEdit.text())
+    else:
+        # self.messageEdit.setText("Type message here...")
+        pass
+
+
+if __name__ == '__main__':
+    main()

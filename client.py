@@ -5,6 +5,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 BUFSIZ = 1024
 
 class Client(QObject):
+
     class commu(QObject):
         to_log_sygnal = pyqtSignal(['QString'])
 
@@ -20,6 +21,8 @@ class Client(QObject):
         while True:
             try:
                 msg = self.sock.recv(BUFSIZ).decode("utf8")
+                if str(msg) == "#quit":
+                    self.disconnect()
                 print(str(msg))
                 self.cm.to_log_sygnal.emit(str(msg))
                 # msg_list.insert(tkinter.END, msg)
@@ -47,4 +50,5 @@ class Client(QObject):
         # receive_thread.start()
 
     def disconnect(self):
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()

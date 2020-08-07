@@ -1,9 +1,17 @@
 import client
 from PyQt5 import QtCore, QtGui, QtWidgets
 from threading import Thread
+from PyQt5.QtCore import QObject, pyqtSignal
 
 
 class UiForm(object):
+
+    class signals(QObject):
+        connect_signal = pyqtSignal([tuple])
+
+
+
+
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(400, 300)
@@ -45,21 +53,13 @@ class UiForm(object):
 
         self.my_client = None
 
+
     def connectToHost(self):
         addr = (self.hostEdit.text(), int(self.portEdit.text()))
-        self.my_client = client.Client()
-        self.my_client.cm.to_log_sygnal.connect(self.log_append)
-        if self.my_client.connect(addr):
-            thread = Thread(target=self.my_client.receive, daemon=True)
-            thread.start()
+        self.sgn.connect_signal.emit(addr)
 
 
 
-            self.DisconnectButton.setEnabled(True)
-            self.connectButton.setEnabled(False)
-            self.log.append("Connect to " + str(addr[0]) + ":" + str(addr[1]))
-        else:
-            self.log.append("Error connecting to " + str(addr[0]) + ":" + str(addr[1]))
 
     def disconnectToHost(self):
         # addr = (self.hostEdit.text(), int(self.portEdit.text()))
